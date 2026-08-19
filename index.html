@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DORKSCOPE // Google Dorks & OSINT Intelligence Matrix</title>
+    <meta name="description"
+        content="Advanced Google Dorking, Subdomain Recon, OSINT, and Threat Intelligence Helper Tool by Mariya Shaikh">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+
+    <!-- Tailwind CSS (Utility Framework) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Custom Glassmorphism & Cyber Emerald Theme CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="antialiased">
+
+    <!-- Interactive Ambient Canvas -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- Navigation Header -->
+    <header class="w-full border-b border-white/10 glass-card rounded-none py-4 px-6 mb-6 z-20">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold text-xl shadow-[0_0_15px_rgba(0,255,157,0.2)]">
+                    ⚡
+                </div>
+                <div>
+                    <h1 class="text-xl md:text-2xl font-extrabold tracking-tight brand-glow flex items-center gap-2">
+                        DORK<span class="text-emerald-400">SCOPE</span>
+                        <span
+                            class="text-xs uppercase font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">v2.0
+                            PRO</span>
+                    </h1>
+                    <p class="text-xs font-mono text-slate-400">PENTEST • OSINT • GOOGLE DORKS MATRIX • Created by <span
+                            class="text-emerald-400 font-bold">Mariya Shaikh</span></p>
+                </div>
+            </div>
+
+            <!-- Stats & Quick Controls -->
+            <div class="flex items-center gap-3">
+                <button id="open-studio-btn" class="btn-primary text-xs py-2 px-4">
+                    <span>🛠️</span> Custom Dork Studio
+                </button>
+                <button id="export-btn" class="btn-icon text-xs py-2 px-3 flex items-center gap-1">
+                    <span>📥</span> Export List
+                </button>
+                <button id="theme-toggle" class="btn-icon p-2 rounded-full" title="Toggle Light/Dark Theme">
+                    <span id="theme-icon">🌙</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 md:px-6 pb-16 flex-grow w-full z-10">
+
+        <!-- Target Domain Control Panel -->
+        <section class="glass-card p-6 md:p-8 mb-8 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none">
+            </div>
+
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 mb-4">
+                <div>
+                    <label for="target-domain"
+                        class="text-xs font-mono font-bold uppercase tracking-widest text-emerald-400 flex items-center gap-2">
+                        <span>🎯</span> Target Domain / Hostname
+                    </label>
+                    <p class="text-xs text-slate-400 mt-1">Enter target domain to auto-generate all recon dorks and
+                        OSINT queries.</p>
+                </div>
+                <span
+                    class="text-[11px] font-mono text-slate-400 bg-white/5 px-3 py-1 rounded-full border border-white/10 hidden md:block">
+                    💡 Tip: Pass <code class="text-emerald-400 font-bold">?d=example.com</code> in URL to auto-load
+                </span>
+            </div>
+
+            <div class="flex flex-col md:flex-row gap-4">
+                <div class="flex-grow relative">
+                    <span
+                        class="absolute left-4 top-1/2 transform -translate-y-1/2 font-mono text-emerald-400 font-bold">➜</span>
+                    <input type="text" id="target-domain"
+                        placeholder="e.g. *.com or target.com or https://admin.target.com/test"
+                        class="glass-input w-full rounded-xl py-3.5 pl-10 pr-24 text-base md:text-lg focus:ring-0"
+                        autocomplete="off" spellcheck="false">
+
+                    <button id="clear-target-btn"
+                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs font-mono text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 px-2 py-1 rounded transition-colors hidden">
+                        Clear ✖
+                    </button>
+                </div>
+
+                <button id="scan-trigger-btn" class="btn-primary py-3.5 px-8 whitespace-nowrap text-sm">
+                    🚀 Run Recon Scan
+                </button>
+            </div>
+
+            <!-- Error Banner -->
+            <div id="target-error"
+                class="hidden mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono flex items-center gap-2">
+                <span>⚠️</span> <span>Target Domain Required! Please enter a domain name above.</span>
+            </div>
+
+            <!-- Parsed Info Bar -->
+            <div id="target-info-bar"
+                class="mt-4 pt-4 border-t border-white/10 flex flex-wrap items-center justify-between text-xs font-mono text-slate-400 gap-4 hidden">
+                <div class="flex items-center gap-3">
+                    <span>Clean Host: <strong id="parsed-host" class="text-emerald-400">---</strong></span>
+                    <span>•</span>
+                    <span>Root Domain: <strong id="parsed-root" class="text-cyan-400">---</strong></span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button id="copy-target-btn" class="hover:text-emerald-400 transition-colors">📋 Copy
+                        Domain</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search Filter Bar & Category Pills -->
+        <section class="mb-8">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 mb-6">
+                <!-- Category Filter Tabs -->
+                <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none"
+                    id="categories-container">
+                    <!-- Dynamic Pills rendered via JS -->
+                </div>
+
+                <!-- Real-time Text Search -->
+                <div class="w-full md:w-72 relative">
+                    <input type="text" id="search-filter" placeholder="🔍 Search 60+ dorks..."
+                        class="glass-input w-full rounded-full py-2 pl-4 pr-10 text-xs focus:ring-0">
+                    <span id="search-clear-btn"
+                        class="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-slate-400 cursor-pointer hover:text-white hidden">✖</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tools Bento Grid -->
+        <section>
+            <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 min-h-[300px]">
+                <!-- Cards dynamically populated via JS -->
+            </div>
+
+            <!-- Empty Results Placeholder -->
+            <div id="empty-results" class="hidden text-center py-16 glass-card">
+                <div class="text-4xl mb-3">🔍</div>
+                <h3 class="text-lg font-bold text-slate-300">No Dorks Matched Your Search</h3>
+                <p class="text-xs text-slate-400 mt-1">Try resetting search filter or switching categories.</p>
+                <button id="reset-search-btn" class="btn-primary text-xs mt-4 py-2 px-4">Reset Search</button>
+            </div>
+        </section>
+
+        <!-- External Recon Links Grid -->
+        <section class="mt-14 glass-card p-6 md:p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-lg font-bold tracking-wide text-slate-100 flex items-center gap-2">
+                    <span class="text-purple-400">🌐</span> EXTERNAL RECON & SECURITY TOOLBOX
+                </h2>
+                <span class="text-xs font-mono text-slate-400">Quick Links</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+                id="external-tools-container">
+                <!-- Rendered dynamically -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Custom Dork Studio Modal -->
+    <div id="custom-studio-modal" class="modal-overlay">
+        <div class="glass-card max-w-xl w-full mx-4 p-6 md:p-8 relative">
+            <button id="close-studio-btn"
+                class="absolute top-4 right-4 text-slate-400 hover:text-white text-lg">✖</button>
+
+            <h2 class="text-xl font-bold text-emerald-400 mb-1 flex items-center gap-2">
+                <span>🛠️</span> Custom Google Dork Builder Studio
+            </h2>
+            <p class="text-xs text-slate-400 mb-6">Create customized search strings with advanced Google operators.</p>
+
+            <div class="space-y-4 font-mono text-xs">
+                <div>
+                    <label class="block text-slate-300 mb-1">Target Scope</label>
+                    <input type="text" id="studio-scope" placeholder="e.g. example.com"
+                        class="glass-input w-full p-2.5 rounded-lg">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-slate-300 mb-1">Operator</label>
+                        <select id="studio-operator"
+                            class="glass-input w-full p-2.5 rounded-lg bg-slate-900 text-slate-200">
+                            <option value="site:">site: (Domain scope)</option>
+                            <option value="inurl:">inurl: (URL string)</option>
+                            <option value="intitle:">intitle: (Page title)</option>
+                            <option value="intext:">intext: (Page content)</option>
+                            <option value="filetype:">filetype: (File extension)</option>
+                            <option value="ext:">ext: (File extension alias)</option>
+                            <option value="cache:">cache: (Google cache snapshot)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-300 mb-1">Keyword / Parameter</label>
+                        <input type="text" id="studio-keyword" placeholder="e.g. admin or db_pass"
+                            class="glass-input w-full p-2.5 rounded-lg">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-slate-300 mb-1">Generated Search Query Preview</label>
+                    <div id="studio-query-preview"
+                        class="p-3 bg-black/50 border border-emerald-500/30 rounded-lg text-emerald-300 break-all select-all">
+                        site:example.com intitle:"admin"
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 pt-4">
+                    <button id="studio-copy-btn" class="btn-icon flex-1 py-2.5">
+                        📋 Copy Query
+                    </button>
+                    <button id="studio-launch-btn" class="btn-primary flex-1 py-2.5">
+                        🚀 Launch Search
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-white/10 py-6 text-center text-xs font-mono text-slate-400 z-10">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+                DORKSCOPE ENGINE • PENTEST & OSINT AUTOMATION TOOL
+            </div>
+            <div class="flex items-center gap-4">
+                <span>Designed & Developed by <strong class="text-emerald-400 font-semibold">Mariya
+                        Shaikh</strong></span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="dorksData.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
